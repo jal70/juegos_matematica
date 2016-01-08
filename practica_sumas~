@@ -41,10 +41,19 @@ else
 echo $nombre_jugador >> files/jugadores.hist
 sort files/jugadores.hist|uniq > jugadores_n
 mv jugadores_n files/jugadores.hist 
-
-echo "Selecciona el nivel con el que quieres jugar (1=basico, 2=intermedio, 3=avanzado)"
+#clear
+awk '$6~/'$nombre_jugador'/ {'nivel_ant='$7; print "Hola", $6 ". Jugaste por última vez el día", strftime("%c ", $3)". Hace", int(('$(date -u +%s)'-$3)/86400), "días y", (('$(date -u +%s)'-$3)%86400)/3600, "horas.\n\n" "Jugaste en el nivel", $7"\n\n"}' files/sumas.hist|tail -n 5
+nivel_ant=$(awk '$6~/'$nombre_jugador'/ {print $7}' files/sumas.hist|tail -n 1)
+echo "Tus tres mejores desempeños sin fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
+awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
+echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
+awk '$6~/'$nombre_jugador'/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
+echo "Selecciona el nivel con el que quieres jugar (1=basico, 2=intermedio, 3=avanzado, e=entrenamiento adaptativo puntos débiles)"
 read seleccion
-if [ "$seleccion" == 3 ]
+if [ "$seleccion" == e ]
+then
+	nivel=Adaptativo
+elif [ "$seleccion" == 3 ]
 then
 	nivel=19
 elif [ "$seleccion"  == 2 ]
