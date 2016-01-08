@@ -6,3 +6,6 @@ Se trata de una serie de scripts sencillos para practicar las operaciones básic
 Pensado para niños que están aprendiendo.
 
 Todo funciona bajo linux.
+
+Requiere cowsay
+sudo apt-get install cowsay terminator
