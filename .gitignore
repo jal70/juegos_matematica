@@ -1,2 +1,5 @@
 # Historiales
 *.hist
+
+#Temporales
+*_temp*
