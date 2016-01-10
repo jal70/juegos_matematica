@@ -21,42 +21,31 @@ echo "Tus tres mejores desempeños sin fallas para el nivel" $nivel_ant "fueron"
 awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
 echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
 awk '$6~/'$nombre_jugador'/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
-echo "Selecciona el nivel con el que quieres jugar (1=basico, 2=intermedio, 3=avanzado, e=entrenamiento adaptativo puntos débiles)"
+echo "Selecciona el rango de tablas con el que quieres jugar. Primera tabla:"
+echo "(o selecciona e: entrenamiento adaptativo puntos débiles)"
 read seleccion
 if [ "$seleccion" == e ]
 then
 	nivel=Adaptativo
-elif [ "$seleccion" == 3 ]
-then
-	nivel=10
-elif [ "$seleccion"  == 2 ]
-then
-	nivel=7
 else
-	nivel=5
-	seleccion=1
+	nivel1=$seleccion
+	echo "Segunda tabla"
+	read nivel2
 fi
 else
 echo $nombre_jugador >> files/jugadores_productos.hist
 sort files/jugadores_productos.hist|uniq > jugadores_n
 mv jugadores_n files/jugadores_productos.hist 
 
-echo "Selecciona el nivel con el que quieres jugar (1=basico, 2=intermedio, 3=avanzado)"
-read seleccion
-if [ "$seleccion" == 3 ]
-then
-	nivel=10
-elif [ "$seleccion"  == 2 ]
-then
-	nivel=7
-else
-	nivel=5
-	seleccion=1
-fi
+echo "Selecciona el rango de tablas con el que quieres jugar. Primera tabla:"
+read nivel1
+echo "Segunda tabla"
+read nivel2
 fi
 if [ "$nivel" != 'Adaptativo' ]
 then
-	sed -e 's/sustituir_nivel/'$nivel'/' files/lista_productos.awk > lista_productos_temp.awk
+	sed -e 's/sustituir_nivel1/'$nivel1'/' files/lista_productos.awk > lista_productos_temp.awk
+	sed -i -e 's/sustituir_nivel2/'$nivel2'/' lista_productos_temp.awk
 	lista_de_operaciones=($(awk -f lista_productos_temp.awk files/productos.hist))
 else
 	sed -e 's/quien_juega/'$nombre_jugador'/' files/adaptativo.awk > adaptativo_temp.awk
