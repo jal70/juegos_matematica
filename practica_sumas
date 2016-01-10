@@ -7,8 +7,7 @@ green=`tput setaf 2`
 blue=`tput setaf 4`
 reset=`tput sgr0`
 #echo "${red}red text ${green}green text${reset}"
-rm *_temp* # necesario verificar si hay archivos temp existentes. Así da un error, que no se llega a ver
-clear
+rm -f *_temp* # necesario verificar si hay archivos temp existentes. Así da un error, que no se llega a ver
 echo $(awk '$1~/lista_ju/ {print $2, $3, $4}' files/textos)
 more files/jugadores.hist
 echo $(awk '$1~/jugador/ {print $2}' files/textos)
