@@ -8,7 +8,6 @@ blue=`tput setaf 4`
 reset=`tput sgr0`
 #echo "${red}red text ${green}green text${reset}"
 rm -f *_temp* # necesario verificar si hay archivos temp existentes. Así da un error, que no se llega a ver
-#clear
 echo $(awk '$1~/lista_ju/ {print $2, $3, $4}' files/textos)
 more files/jugadores.hist
 echo $(awk '$1~/jugador/ {print $2}' files/textos)
@@ -19,9 +18,9 @@ then
 awk '$6~/'$nombre_jugador'/ {'nivel_ant='$7; print "Hola", $6 ". Jugaste por última vez el día", strftime("%c ", $3)". Hace", int(('$(date -u +%s)'-$3)/86400), "días y", (('$(date -u +%s)'-$3)%86400)/3600, "horas.\n\n" "Jugaste en el nivel", $7"\n\n"}' files/sumas.hist|tail -n 5
 nivel_ant=$(awk '$6~/'$nombre_jugador'/ {print $7}' files/sumas.hist|tail -n 1)
 echo "Tus tres mejores desempeños sin fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
-awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
+awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$nivel_ant'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
 echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
-awk '$6~/'$nombre_jugador'/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
+awk '$6~/'$nombre_jugador'/ && $7~/'$nivel_ant'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
 echo "Selecciona el nivel con el que quieres jugar (1=basico, 2=intermedio, 3=avanzado, e=entrenamiento adaptativo puntos débiles)"
 read seleccion
 if [ "$seleccion" == e ]
@@ -100,7 +99,8 @@ while [ "$jugar" != "n" ]; do
 			let "t_final+=$(date -u +%s)-$delay"
 		fi
 	done
-	echo "Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
+	let "repeticion+=1"
+	echo "Intento número" $repeticion $'\n'"Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
 	echo "# Resumen" $tic $'\t' $bien $'\t' $mal $'\t' $nombre_jugador $seleccion >> historial_sumas_temp
 	echo echo /usr/games/fortune | cowsay "¿Seguir jugando?" $'\n\t' "Presiona ENTER" $'\n' "¿Parar?"  $'\n\t' "Escribe n y presiona ENTER para terminar..."
 	read jugar
