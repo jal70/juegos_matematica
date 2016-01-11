@@ -18,9 +18,9 @@ then
 awk '$6~/'$nombre_jugador'/ {'nivel_ant='$7; print "Hola", $6 ". Jugaste por última vez el día", strftime("%c ", $3)". Hace", int(('$(date -u +%s)'-$3)/86400), "días y", (('$(date -u +%s)'-$3)%86400)/3600, "horas.\n\n" "Jugaste en el nivel", $7"\n\n"}' files/productos.hist|tail -n 5
 nivel_ant=$(awk '$6~/'$nombre_jugador'/ {print $7}' files/productos.hist|tail -n 1)
 echo "Tus tres mejores desempeños sin fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
-awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
+awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$nivel_ant'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
 echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
-awk '$6~/'$nombre_jugador'/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
+awk '$6~/'$nombre_jugador'/ && $7~/'$nivel_ant'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
 echo "Selecciona el rango de tablas con el que quieres jugar. Primera tabla:"
 echo "(o selecciona e: entrenamiento adaptativo puntos débiles)"
 read seleccion
@@ -31,16 +31,17 @@ else
 	nivel1=$seleccion
 	echo "Segunda tabla"
 	read nivel2
+	nivel=$nivel1-$nivel2
 fi
 else
-echo $nombre_jugador >> files/jugadores_productos.hist
-sort files/jugadores_productos.hist|uniq > jugadores_n
-mv jugadores_n files/jugadores_productos.hist 
-
-echo "Selecciona el rango de tablas con el que quieres jugar. Primera tabla:"
-read nivel1
-echo "Segunda tabla"
-read nivel2
+	echo $nombre_jugador >> files/jugadores_productos.hist
+	sort files/jugadores_productos.hist|uniq > jugadores_n
+	mv jugadores_n files/jugadores_productos.hist 
+	echo "Selecciona el rango de tablas con el que quieres jugar. Primera tabla:"
+	read nivel1
+	echo "Segunda tabla"
+	read nivel2
+	nivel=$nivel1-$nivel2
 fi
 if [ "$nivel" != 'Adaptativo' ]
 then
@@ -66,11 +67,9 @@ while [ "$jugar" != "n" ]; do
 	mal=0
 	t_final=$(($tic+60))
 	while [ "$toc" -le "$t_final" ]; do
-		clear
-		echo ${lista_de_operaciones[prod_num]}
 		fac1=$((${lista_de_operaciones[prod_num]}/100))
 		fac2=$((${lista_de_operaciones[prod_num]}%100))
-		#clear
+		clear
 		echo $fac1" x "$fac2 $'\t \t' ${green}$bien${reset}" OK" $'\t' ${red}$mal${reset}" X"
 		tiki=$(date -u +%s%N)
 		read producto
@@ -90,21 +89,22 @@ while [ "$jugar" != "n" ]; do
 			let "t_final+=$(date -u +%s)-$delay"
 		fi
 	done
-	echo "Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
-	echo "# Resumen" $tic $'\t' $bien $'\t' $mal $'\t' $nombre_jugador $seleccion >> historial_productos_temp
+	let "repeticion+=1"
+	echo "Intento número" $repeticion $'\n' "Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
+	echo "# Resumen" $tic $'\t' $bien $'\t' $mal $'\t' $nombre_jugador $nivel >> historial_productos_temp
 	echo echo /usr/games/fortune | cowsay "¿Seguir jugando?" $'\n\t' "Presiona ENTER" $'\n' "¿Parar?"  $'\n\t' "Escribe n y presiona ENTER para terminar..."
 	read jugar
 	clear
 done
-echo "# Sesion_final" $sesion $nombre_jugador >> historial_productos_temp
+echo "# Final_de_sesión" $sesion $nombre_jugador "Num_repeticiones" $repeticiones >> historial_productos_temp
 clear
 echo "¡Chao" $nombre_jugador", regresa pronto!"
 cat historial_productos_temp >> files/productos.hist
 rm *_temp*
 #Mejores números
 echo "Historial" $nombre_jugador
-echo "Tus tres mejores desempeños sin fallas para el nivel" $seleccion "fueron"$'\nOK\tX\tFecha'
-awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
-echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $seleccion "fueron"$'\nOK\tX\tFecha'
-awk '$6~/'$nombre_jugador'/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
+echo "Tus tres mejores desempeños sin fallas para el nivel" $nivel "fueron"$'\nOK\tX\tFecha'
+awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$nivel'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
+echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $nivel "fueron"$'\nOK\tX\tFecha'
+awk '$6~/'$nombre_jugador'/ && $7~/'$nivel'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
 pause 'presiona ENTER para terminar ...'
