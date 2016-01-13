@@ -66,7 +66,8 @@ suma_num=0
 jugar=y
 sesion=$(awk 'BEGIN{sesion=0}$4~/'$nombre_jugador'/ && $2~/Sesion_final/ {sesion=$3}END{print sesion}' files/sumas.hist)
 let "sesion += 1"
-echo "# Sesion_inicio" $sesion $nombre_jugador >> historial_sumas_temp
+echo "# Inicio_de_Sesion" $sesion $nombre_jugador >> historial_sumas_temp
+repeticion=0
 while [ "$jugar" != "n" ]; do
 	pause 'presiona ENTER para sumar por un minuto ...'
 	tic=$(date -u +%s)
@@ -106,7 +107,7 @@ while [ "$jugar" != "n" ]; do
 	read jugar
 	clear
 done
-echo "# Sesion_final" $sesion $nombre_jugador >> historial_sumas_temp
+echo "# Final_de_sesión" $sesion $nombre_jugador "Num_repeticiones" $repeticiones >> historial_sumas_temp
 clear
 echo "¡Chao" $nombre_jugador", regresa pronto!"
 cat historial_sumas_temp >> files/sumas.hist

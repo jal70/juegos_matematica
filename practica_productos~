@@ -91,7 +91,7 @@ while [ "$jugar" != "n" ]; do
 		fi
 	done
 	let "repeticion+=1"
-	echo "Intento número" $repeticion $'\n' "Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
+	echo "Intento número" $repeticion $'\n'"Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
 	echo "# Resumen" $tic $'\t' $bien $'\t' $mal $'\t' $nombre_jugador $nivel >> historial_productos_temp
 	echo echo /usr/games/fortune | cowsay "¿Seguir jugando?" $'\n\t' "Presiona ENTER" $'\n' "¿Parar?"  $'\n\t' "Escribe n y presiona ENTER para terminar..."
 	read jugar
