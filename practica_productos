@@ -59,7 +59,9 @@ let "sesion += 1"
 echo "# Inicio_de_Sesion" $sesion $nombre_jugador >> historial_productos_temp
 repeticion=0
 while [ "$jugar" != "n" ]; do
-	pause 'presiona ENTER para multiplicar por un minuto ...'
+	echo "Selecciona el modo de juego. (1 = jugar por un minuto; 2 = jugar hasta completar 20 aciertos)"
+	read Modo_juego #<------ problema: ¿cómo evito escribir la rutina de revisión dos veces?
+	pause 'presiona ENTER para comenzar la sesión ...'
 	tic=$(date -u +%s)
 	toc=$tic
 	echo "# Historial" $tic $nombre_jugador $(date -d @$tic) >> historial_productos_temp
