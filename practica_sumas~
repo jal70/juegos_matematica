@@ -107,7 +107,7 @@ while [ "$jugar" != "n" ]; do
 	read jugar
 	clear
 done
-echo "# Final_de_sesión" $sesion $nombre_jugador "Num_repeticiones" $repeticiones >> historial_sumas_temp
+echo "# Final_de_sesión" $sesion $nombre_jugador "Num_repeticiones" $repeticion >> historial_sumas_temp
 clear
 echo "¡Chao" $nombre_jugador", regresa pronto!"
 cat historial_sumas_temp >> files/sumas.hist

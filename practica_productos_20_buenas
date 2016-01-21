@@ -61,12 +61,12 @@ repeticion=0
 while [ "$jugar" != "n" ]; do
 	pause 'presiona ENTER para comenzar la sesión ...'
 	tic=$(date -u +%s)
-	toc=$tic
 	echo "# Historial" $tic $nombre_jugador $(date -d @$tic) >> historial_productos_temp
 	echo "# Check" $'\t' "S1" $'\t' "S2" $'\t' "User" $'\t' "Prog" $'\t' "Time" $'\t' "Jugad" $'\t' "Nivel" >> historial_productos_temp
 	bien=0
 	mal=0
-	t_final=$(($tic+60))
+	toc=1
+	t_final=20
 	while [ "$toc" -le "$t_final" ]; do
 		fac1=$((${lista_de_operaciones[prod_num]}/100))
 		fac2=$((${lista_de_operaciones[prod_num]}%100))
@@ -75,7 +75,7 @@ while [ "$jugar" != "n" ]; do
 		tiki=$(date -u +%s%N)
 		read producto
 		toki=$(date -u +%s%N)
-		toc=$(date -u +%s)
+		let "toc += 1"
 		let "prod_num=($prod_num+1)%1000"
 		if [ "$producto" = "$(($fac1*$fac2))" ]
 		then
@@ -85,13 +85,12 @@ while [ "$jugar" != "n" ]; do
 			let "mal+=1"
 			echo "X" $'\t' $fac1 $'\t' $fac2 $'\t' $producto $'\t' $(($fac1*$fac2)) $'\t' $((($toki-$tiki)/1000000)) $'\t' $nombre_jugador $'\t' $nivel >> historial_productos_temp
 			echo /usr/games/fortune | cowsay "Incorrecto. Recuerda" $'\n\n\t' $fac1" x "$fac2" = "$(($fac1*$fac2))
-			delay=$(date -u +%s)
 			pause 'presiona ENTER para continuar ...'
-			let "t_final+=$(date -u +%s)-$delay"
+			let "t_final+=1"
 		fi
 	done
 	let "repeticion+=1"
-	echo "Intento número" $repeticion $'\n'"Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
+	echo "Serie número" $repeticion $'\n'"Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
 	echo "# Resumen" $tic $'\t' $bien $'\t' $mal $'\t' $nombre_jugador $nivel >> historial_productos_temp
 	echo echo /usr/games/fortune | cowsay "¿Seguir jugando?" $'\n\t' "Presiona ENTER" $'\n' "¿Parar?"  $'\n\t' "Escribe n y presiona ENTER para terminar..."
 	read jugar

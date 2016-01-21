@@ -59,7 +59,7 @@ let "sesion += 1"
 echo "# Inicio_de_Sesion" $sesion $nombre_jugador >> historial_productos_temp
 repeticion=0
 while [ "$jugar" != "n" ]; do
-	pause 'presiona ENTER para multiplicar por un minuto ...'
+	pause 'presiona ENTER para comenzar la sesión ...'
 	tic=$(date -u +%s)
 	toc=$tic
 	echo "# Historial" $tic $nombre_jugador $(date -d @$tic) >> historial_productos_temp
@@ -91,7 +91,7 @@ while [ "$jugar" != "n" ]; do
 		fi
 	done
 	let "repeticion+=1"
-	echo "Intento número" $repeticion $'\n'"Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
+	echo "Serie número" $repeticion $'\n'"Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
 	echo "# Resumen" $tic $'\t' $bien $'\t' $mal $'\t' $nombre_jugador $nivel >> historial_productos_temp
 	echo echo /usr/games/fortune | cowsay "¿Seguir jugando?" $'\n\t' "Presiona ENTER" $'\n' "¿Parar?"  $'\n\t' "Escribe n y presiona ENTER para terminar..."
 	read jugar
