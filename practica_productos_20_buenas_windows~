@@ -1,4 +1,3 @@
-
 #!/bin/bash
 function pause(){
    read -p "$*"
@@ -9,10 +8,19 @@ blue=`tput setaf 4`
 reset=`tput sgr0`
 #echo "${red}red text ${green}green text${reset}"
 rm -f *_temp* # necesario verificar si hay archivos temp existentes. Así da un error, que no se llega a ver
-echo $(awk '$1~/lista_ju/ {print $2, $3, $4}' files/textos)
-more files/jugadores_productos.hist
-echo $(awk '$1~/jugador/ {print $2}' files/textos)
-read nombre_jugador
+#echo $(awk '$1~/lista_ju/ {print $2, $3, $4}' files/textos)
+#more files/jugadores_productos.hist
+#echo $(awk '$1~/jugador/ {print $2}' files/textos)
+#### alternativa con ventanas
+nombre_jugadorq=$(zenity --list --title="Escoge tu nombre" --column="Jugadores" $(cat files/jugadores_productos.hist) "Nuevo jugador")
+if [ "$nombre_jugadorq" == "Nuevo jugador" ]
+then
+nombre_jugador=$(zenity --entry --entry-text="Type" --text="Escribe nombre del nuevo jugador")
+else
+nombre_jugador=$nombre_jugadorq
+fi
+#### fin de alternativa con ventanas
+#read nombre_jugador
 jugador_existe=$(grep -Fxq $nombre_jugador files/jugadores_productos.hist ; [ $? -eq 0 ] && echo 1 || echo 0)
 if [ "$jugador_existe" == 1 ]
 then
@@ -22,16 +30,18 @@ echo "Tus tres mejores desempeños sin fallas para el nivel" $nivel_ant "fueron"
 awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$nivel_ant'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
 echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
 awk '$6~/'$nombre_jugador'/ && $7~/'$nivel_ant'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
-echo "Selecciona el rango de tablas con el que quieres jugar. Primera tabla:"
-echo "(o selecciona e: entrenamiento adaptativo puntos débiles)"
-read seleccion
-if [ "$seleccion" == e ]
+#echo "Selecciona el rango de tablas con el que quieres jugar. Primera tabla:"
+#echo "(o selecciona e: entrenamiento adaptativo puntos débiles)"
+#read seleccion
+seleccion=$(zenity --list --title="Selecciona el rango de tablas con el que quieres jugar. Primera tabla:" --column="Tabla" 2 3 4 5 6 7 8 9 "Entrenamiento adaptativo")
+if [ "$seleccion" == "Entrenamiento adaptativo" ]
 then
 	nivel=Adaptativo
 else
 	nivel1=$seleccion
-	echo "Segunda tabla"
-	read nivel2
+	#echo "Segunda tabla"
+	#read nivel2
+	nivel2=$(zenity --list --title="Selecciona el rango de tablas con el que quieres jugar. Primera tabla:" --column="Tabla" 2 3 4 5 6 7 8 9)
 	nivel=$nivel1-$nivel2
 fi
 else
@@ -59,8 +69,12 @@ sesion=$(awk 'BEGIN{sesion=0}$4~/'$nombre_jugador'/ && $2~/Sesion_final/ {sesion
 let "sesion += 1"
 echo "# Inicio_de_Sesion" $sesion $nombre_jugador >> historial_productos_temp
 repeticion=0
+	echo 2 0 > grafica_promedios_temp
+	gnuplot < promedios.plot
+	eog promedios_temp.png &
 while [ "$jugar" != "n" ]; do
-	pause 'presiona ENTER para comenzar la sesión ...'
+	#pause 'presiona ENTER para comenzar la sesión ...'
+	zenity --info --text="presiona OK para comenzar la sesión ..."	
 	tic=$(date -u +%s)
 	echo "# Historial" $tic $nombre_jugador $(date -d @$tic) >> historial_productos_temp
 	echo "# Check" $'\t' "S1" $'\t' "S2" $'\t' "User" $'\t' "Prog" $'\t' "Time" $'\t' "Jugad" $'\t' "Nivel" >> historial_productos_temp
@@ -86,15 +100,26 @@ while [ "$jugar" != "n" ]; do
 			let "mal+=1"
 			echo "X" $'\t' $fac1 $'\t' $fac2 $'\t' $producto $'\t' $(($fac1*$fac2)) $'\t' $((($toki-$tiki)/1000000)) $'\t' $nombre_jugador $'\t' $nivel >> historial_productos_temp
 			echo /usr/games/fortune | cowsay "Incorrecto. Recuerda" $'\n\n\t' $fac1" x "$fac2" = "$(($fac1*$fac2))
-			pause 'presiona ENTER para continuar ...'
+			echo "Incorrecto. Recuerda" $'\n\n\t' $fac1" x "$fac2" = "$(($fac1*$fac2)) > vacadice_temp
+			#pause 'presiona ENTER para continuar ...'
+			zenity --text-info --filename=vacadice_temp
 			let "t_final+=1"
 		fi
 	done
 	let "repeticion+=1"
 	echo "Serie número" $repeticion $'\n'"Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
 	echo "# Resumen" $tic $'\t' $bien $'\t' $mal $'\t' $nombre_jugador $nivel >> historial_productos_temp
-	echo echo /usr/games/fortune | cowsay "¿Seguir jugando?" $'\n\t' "Presiona ENTER" $'\n' "¿Parar?"  $'\n\t' "Escribe n y presiona ENTER para terminar..."
-	read jugar
+	#echo echo /usr/games/fortune | cowsay "¿Seguir jugando?" $'\n\t' "Presiona ENTER" $'\n' "¿Parar?"  $'\n\t' "Escribe n y presiona ENTER para terminar..."
+	#read jugar
+	awk -f files/promedios.awk historial_productos_temp|sort > grafica_promedios_temp
+	gnuplot < promedios.plot
+	zenity --timeout 120 --question --text="¿Quieres seguir jugando?"
+	case $? in
+	0) jugar=y
+	;;
+	1) jugar=n
+	;;
+	esac
 	clear
 done
 echo "# Final_de_sesión" $sesion $nombre_jugador "Num_repeticiones" $repeticion >> historial_productos_temp
@@ -108,4 +133,5 @@ echo "Tus tres mejores desempeños sin fallas para el nivel" $nivel "fueron"$'\n
 awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$nivel'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
 echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $nivel "fueron"$'\nOK\tX\tFecha'
 awk '$6~/'$nombre_jugador'/ && $7~/'$nivel'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/productos.hist |sort -k1,2 -n -r|head -n 3
-pause 'presiona ENTER para terminar ...'
+#pause 'presiona ENTER para terminar ...'
+zenity --timeout 10 --info --text="presiona OK para terminar la sesión ..."

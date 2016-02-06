@@ -1,0 +1,137 @@
+#!/bin/bash
+function pause(){
+   read -p "$*"
+}
+red=`tput setaf 1`
+green=`tput setaf 2`
+blue=`tput setaf 4`
+reset=`tput sgr0`
+#echo "${red}red text ${green}green text${reset}"
+rm -f *_temp* # necesario verificar si hay archivos temp existentes. Así da un error, que no se llega a ver
+#echo $(awk '$1~/lista_ju/ {print $2, $3, $4}' files/textos)
+#more files/jugadores_productos.hist
+#echo $(awk '$1~/jugador/ {print $2}' files/textos)
+#### alternativa con ventanas
+nombre_jugadorq=$(zenity --list --title="Escoge tu nombre" --column="Jugadores" $(cat files/jugadores_productos.hist) "Nuevo jugador")
+if [ "$nombre_jugadorq" == "Nuevo jugador" ]
+then
+nombre_jugador=$(zenity --entry --entry-text="Type" --text="Escribe nombre del nuevo jugador")
+else
+nombre_jugador=$nombre_jugadorq
+fi
+#### fin de alternativa con ventanas
+#read nombre_jugador
+jugador_existe=$(grep -Fxq $nombre_jugador files/jugadores.hist ; [ $? -eq 0 ] && echo 1 || echo 0)
+if [ "$jugador_existe" == 1 ]
+then
+awk '$6~/'$nombre_jugador'/ {'nivel_ant='$7; print "Hola", $6 ". Jugaste por última vez el día", strftime("%c ", $3)". Hace", int(('$(date -u +%s)'-$3)/86400), "días y", (('$(date -u +%s)'-$3)%86400)/3600, "horas.\n\n" "Jugaste en el nivel", $7"\n\n"}' files/sumas.hist|tail -n 5
+nivel_ant=$(awk '$6~/'$nombre_jugador'/ {print $7}' files/sumas.hist|tail -n 1)
+echo "Tus tres mejores desempeños sin fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
+awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$nivel_ant'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
+echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $nivel_ant "fueron"$'\nOK\tX\tFecha'
+awk '$6~/'$nombre_jugador'/ && $7~/'$nivel_ant'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
+#echo "Selecciona el nivel con el que quieres jugar (1=basico, 2=intermedio, 3=avanzado, e=entrenamiento adaptativo puntos débiles)"
+#read seleccion
+seleccion=$(zenity --list --title="Selecciona el nivel con el que quieres jugar:" --column="Nivel" --column="Tipo" 1 "Básico" 2 "Intermedio" 3 "Avanzado" "Entrenamiento adaptativo" "Enfocado en puntos débiles")
+if [ "$seleccion" == "Entrenamiento adaptativo" ]
+then
+	nivel=Adaptativo
+elif [ "$seleccion" == 3 ]
+then
+	nivel=19
+elif [ "$seleccion"  == 2 ]
+then
+	nivel=12
+else
+	nivel=9
+	seleccion=1
+fi
+else
+echo $nombre_jugador >> files/jugadores.hist
+sort files/jugadores.hist|uniq > jugadores_n
+mv jugadores_n files/jugadores.hist 
+
+#echo "Selecciona el nivel con el que quieres jugar (1=basico, 2=intermedio, 3=avanzado)"
+#read seleccion
+seleccion=$(zenity --list --title="Selecciona el nivel con el que quieres jugar:" --column="Nivel" --column="Tipo" 1 "Básico" 2 "Intermedio" 3 "Avanzado")
+if [ "$seleccion" == 3 ]
+then
+	nivel=19
+elif [ "$seleccion"  == 2 ]
+then
+	nivel=12
+else
+	nivel=9
+	seleccion=1
+fi
+fi
+if [ "$nivel" != 'Adaptativo' ]
+then
+	sed -e 's/sustituir_nivel/'$nivel'/' files/lista_operaciones.awk > lista_temp.awk
+	lista_sumas=($(awk -f lista_temp.awk files/sumas.hist))
+else
+	sed -e 's/quien_juega/'$nombre_jugador'/' files/adaptativo.awk > adaptativo_temp.awk
+	lista_sumas=($(awk -f adaptativo_temp.awk files/sumas.hist))
+fi
+suma_num=0
+jugar=y
+sesion=$(awk 'BEGIN{sesion=0}$4~/'$nombre_jugador'/ && $2~/Sesion_final/ {sesion=$3}END{print sesion}' files/sumas.hist)
+let "sesion += 1"
+echo "# Inicio_de_Sesion" $sesion $nombre_jugador >> historial_sumas_temp
+repeticion=0
+	echo 2 0 > grafica_promedios_temp
+	gnuplot < promedios.plot
+	eog promedios_temp.png &
+while [ "$jugar" != "n" ]; do
+	#pause 'presiona ENTER para comenzar la sesión ...'
+	zenity --info --text="presiona OK para comenzar la sesión ..."	
+	tic=$(date -u +%s)
+	echo "# Historial" $tic $nombre_jugador $(date -d @$tic) >> historial_sumas_temp
+	echo "# Check" $'\t' "S1" $'\t' "S2" $'\t' "User" $'\t' "Prog" $'\t' "Time" $'\t' "Jugad" $'\t' "Nivel" >> historial_sumas_temp
+	bien=0
+	mal=0
+	toc=1
+	t_final=20
+	while [ "$toc" -le "$t_final" ]; do
+		sum1=$((${lista_sumas[suma_num]}/100))
+		sum2=$((${lista_sumas[suma_num]}%100))
+		clear
+		echo $sum1"+" $'\t \t' ${green}$bien${reset}" OK" $'\t' ${red}$mal${reset}" X" $'\n'$sum2
+		tiki=$(date -u +%s%N)
+		read suma
+		toki=$(date -u +%s%N)
+		let "toc += 1"
+		let "suma_num=($suma_num+1)%1000"
+		if [ "$suma" = "$(($sum1+$sum2))" ]
+		then
+			let "bien+=1"
+			echo "OK" $'\t' $sum1 $'\t' $sum2 $'\t' $suma $'\t' $(($sum1+$sum2)) $'\t' $((($toki-$tiki)/1000000)) $'\t' $nombre_jugador $'\t' $nivel >> historial_sumas_temp
+		else
+			let "mal+=1"
+			echo "X" $'\t' $sum1 $'\t' $sum2 $'\t' $suma $'\t' $(($sum1+$sum2)) $'\t' $((($toki-$tiki)/1000000)) $'\t' $nombre_jugador $'\t' $nivel >> historial_sumas_temp
+			echo /usr/games/fortune | cowsay "Incorrecto. Recuerda" $'\n\n\t' $sum1" + "$sum2" = "$(($sum1+$sum2))
+			echo "Incorrecto. Recuerda" $'\n\n\t' $sum1" + "$sum2" = "$(($sum1+$sum2)) > vacadice_temp
+			#pause 'presiona ENTER para continuar ...'
+			zenity --text-info --filename=vacadice_temp
+			let "t_final+=1"
+		fi
+	done
+	let "repeticion+=1"
+	echo "Serie número" $repeticion $'\n'"Tus resultados"$'\nAciertos\tFallos\n'${green}$bien${reset}$'\t\t'${red}$mal${reset}
+	echo "# Resumen" $tic $'\t' $bien $'\t' $mal $'\t' $nombre_jugador $seleccion >> historial_sumas_temp
+	echo echo /usr/games/fortune | cowsay "¿Seguir jugando?" $'\n\t' "Presiona ENTER" $'\n' "¿Parar?"  $'\n\t' "Escribe n y presiona ENTER para terminar..."
+	read jugar
+	clear
+done
+echo "# Final_de_sesión" $sesion $nombre_jugador "Num_repeticiones" $repeticion >> historial_sumas_temp
+clear
+echo "¡Chao" $nombre_jugador", regresa pronto!"
+cat historial_sumas_temp >> files/sumas.hist
+rm *_temp*
+#Mejores números
+echo "Historial" $nombre_jugador
+echo "Tus tres mejores desempeños sin fallas para el nivel" $seleccion "fueron"$'\nOK\tX\tFecha'
+awk '$6~/'$nombre_jugador'/ && $5~/0/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
+echo "Tus tres mejores desempeños incluyendo fallas para el nivel" $seleccion "fueron"$'\nOK\tX\tFecha'
+awk '$6~/'$nombre_jugador'/ && $7~/'$seleccion'/ {print $4 "\t" $5 "\t" strftime("%c ", $3)}' files/sumas.hist |sort -k1,2 -n -r|head -n 3
+pause 'presiona ENTER para terminar ...'
