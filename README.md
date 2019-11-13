@@ -12,3 +12,9 @@ Requiere cowsay
 Instalación de cowsay: sudo apt-get install cowsay terminator
 
 Uso: se copian todas las carpetas y se hacen ejecutables los archivos practica_*
+
+* Uno
+    * Uno uno
+        * Uno uno uno
+    * Uno dos
+* Dos    
